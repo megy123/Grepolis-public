@@ -6,5 +6,5 @@ Scripty a iné užítočné veci, ktoré môžu spríjemniť zážitok z hry gre
 
 | Projekt | Popis |
 |---------|------------|
-| [📂 Report povstania](./scripts/rebelionReport/README.md) | Vypísanie povstania vo fóre spoločenstva. |
+| [📂 Report povstania](./Scripts/rebelionReport/README.md) | Vypísanie povstania vo fóre spoločenstva. |
 
