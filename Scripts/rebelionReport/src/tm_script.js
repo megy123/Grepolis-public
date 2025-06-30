@@ -57,12 +57,24 @@ const unitsMapper = {
 
 function getReportData() {
     const unitsWL = ["sword", "archer", "hoplite", "chariot", "minotaur", "medusa", "pegasus", "cerberus", "calydonian_boar", "godsent", "bireme", "demolition_ship", "trireme", "sea_monster", "militia"];
+    const naval = ["bireme", "demolition_ship", "trireme", "sea_monster"];
+    const land = ["sword", "archer", "hoplite", "chariot", "minotaur", "medusa", "pegasus", "cerberus", "calydonian_boar", "godsent"];
     let townData = window.MM.getOnlyCollectionByName("Town").getCurrentTown();
-    let units = window.MM.getOnlyCollectionByName("Units").getUnitsInTown();
+    let units = window.MM.getOnlyCollectionByName("Units");
     const revolt = MM.getOnlyCollectionByName("Takeover").models.find(model => model.attributes.destination_town.id === townData.attributes.id);
-    if (!revolt) {
+
+    let timeString = "Koniec";
+    if(revolt){
+        const date = new Date((revolt.attributes.command.started_at + 60*60*2) * 1000); // Convert to milliseconds
+        const hours = String(date.getUTCHours()).padStart(2, '0');
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+        timeString = `${hours}:${minutes}:${seconds}`;
+    }
+    else{
         HumanMessage.error("V tomto meste nemáš žiadne povstanie 👉👈.");
     }
+
     let report = [];
 
     // Attacker
@@ -74,45 +86,75 @@ function getReportData() {
     // Walls
     report.push("Hradby: [b]" + townData.buildings().getBuildingLevel("wall") + "[/b]\n");
 
+    // Tower
+    report.push("Veža: [b]" + (townData.buildings().getBuildingLevel("tower") > 0 ? 'ANO' : 'NIE') + "[/b]\n");
+
+    // 2F
+    report.push("2F: [b]" + timeString + "[b]\n");
+
     // god
     report.push("Boh: [b]" + townData.getGod() + "[/b]\n");
 
     // Spells
-    report.push("Kúzla: [b]");
     let powers = townData.getCastedPowers();
+    let percent = 0;
     let powerNames = powers.map(item => {
+        if(item.attributes.power_id === "defense_boost")percent += 5;
+        if(item.attributes.power_id === "defense_boost_alliance")percent += 2;
+        if(item.attributes.power_id === "defense_penalty")percent -= 10;
+        if(item.attributes.power_id === "epic_defense_boost")percent += 10;
+        if(item.attributes.power_id === "longterm_defense_boost")percent += 5;
+        if(item.attributes.power_id === "rare_defense_boost")percent += 5;
+
         let powerData = window.GameData.powers[item.attributes.power_id];
 
         return (powerData && typeof powerData.name === "string")
             ? powerData.name
             : item.attributes.power_id;
     });
-    report.push(powerNames.join(", "));
-    report.push("[/b]\n");
+    report.push("Kúzla: [b]" + (percent > 0 ? "+" : "") + (percent === 0 ? "-" : percent) + "%[/b]\n");
+    //report.push(powerNames.join(", "));
+    //report.push("[/b]\n");
+
+    // Research
+    let researchers = window.MM.getOnlyCollectionByName("Town").getCurrentTown().getResearches();
+    let resOut = "";
+    if(researchers.attributes.ram)resOut += " zobák";
+    if(researchers.attributes.phalanx)resOut += " šík";
+    if(resOut === "") resOut = " -"
+
+    report.push("Výskum:" + resOut + "\n");
+
 
     // Hero
-    //report.push("Hrdina: [b]" + (townData.getHeroes().length > 0 ? townData.getHeroes()[0].staticData.name : "Žiadny") + "[/b]\n"); TODO
-
-    // Tower
-    report.push("Veža: [b]" + (townData.buildings().getBuildingLevel("tower") > 0 ? 'ANO' : 'NIE') + "[/b]\n");
+    let hero = "Žiadny";
+    const validHeroes = ["urephon", "leonidas", "ajax", "alexandrios", "agamemnon", "hektor", "lysippe", "melousa", "mohalis", "pelops", "perseus", "telemachos", "themistokles", "zuretha"];
+    if(townData.getHeroes().length > 0)
+    {
+        if(validHeroes.includes(townData.getHeroes()[0].staticData.id))
+        {
+            hero = townData.getHeroes()[0].staticData.name + " (" + townData.getHeroes()[0].attributes.level + ")";
+        }
+    }
+    report.push("Hrdina: [b]" + hero + "[/b]\n");
 
     // Army
     report.push("Stav armády: \n");
     let table = "[table]\n";
     if (Config.simpleUnits) {
-        const landUnits = units.getLandUnits();
-        const navalUnits = units.getNavalUnits();
+        const landUnits = units.calculateTotalAmountOfUnits();
+        const navalUnits = units.calculateTotalAmountOfUnits();
 
         let totalLandUnits = 0;
         let totalNavalUnits = 0;
 
         if (Config.defUnits) {
             totalLandUnits = Object.entries(landUnits)
-                .filter(([key]) => unitsWL.includes(key))
+                .filter(([key]) => land.includes(key))
                 .reduce((sum, [, count]) => sum + count, 0);
 
             totalNavalUnits = Object.entries(navalUnits)
-                .filter(([key]) => unitsWL.includes(key))
+                .filter(([key]) => naval.includes(key))
                 .reduce((sum, [, count]) => sum + count, 0);
         } else {
             totalLandUnits = Object.values(landUnits).reduce((sum, count) => sum + count, 0);
@@ -156,21 +198,13 @@ function getReportData() {
     let reportText = report.join("");
 
     // Get report title
-    let timeString = "Koniec";
-    if(revolt){
-        const date = new Date(revolt.attributes.command.started_at * 1000); // Convert to milliseconds
-        const hours = String(date.getUTCHours()).padStart(2, '0');
-        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-        const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-        timeString = `${hours}:${minutes}:${seconds}`;
-    }
     
     let reportTitle = townData.attributes.name + "/M" + townData.attributes.sea_id + "/" + timeString;
 
     // Print report to console
     console.log(reportText);
 
-    return { reportTitle: reportTitle, reportText: report}
+    return { reportTitle: reportTitle, reportText: reportText}
 }
 
 function generateMessage() {
