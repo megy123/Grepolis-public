@@ -125,6 +125,15 @@ function getReportData() {
 
     report.push("Výskum:" + resOut + "\n");
 
+    // Premium
+    let premium = "";
+    if(GameDataPremium.isAdvisorActivated("captain"))premium += " Kapitán";
+    if(GameDataPremium.isAdvisorActivated("commander"))premium += " Veliteľ";
+    if(GameDataPremium.isAdvisorActivated("priest"))premium += " Veľkňažka";
+    if(GameDataPremium.isAdvisorActivated("priest") && GameDataPremium.isAdvisorActivated("commander") && GameDataPremium.isAdvisorActivated("captain"))premium = " ANO";
+    report.push("Premium: [b]" + premium + "[/b]\n");
+
+
 
     // Hero
     let hero = "Žiadny";
