@@ -28,15 +28,15 @@ async function timeAttack(time){
     //console.log(targetTime);
 
     const data = {
-        rider: 132,
-        id: 5178,       // 🏹 target town ID
-        town_id: 883,   // 🏰 your town ID
-        type: "attack",
+        trireme: 155,
+        id: 1089,       // 🏹 target town ID
+        town_id: 626,   // 🏰 your town ID
+        type: "support",
         nl_init: true,
     };
     
     const h = Game.csrfToken;
-    const url = `game/towninfo?town_id=883&action=send_units&h=${h}`;
+    const url = `game/towninfo?town_id=626&action=send_units&h=${h}`;
 
     $.ajax({
         url: url,
@@ -99,7 +99,7 @@ function sleep(ms) {
 }
 
 (function() {
-    const targetTime = "2025-06-30T01:10:30";
+    const targetTime = "2025-07-07T16:00:13";
     const date = new Date(targetTime); // ISO format
     const targetTimeUnix = Math.floor(date.getTime() / 1000);
 
@@ -109,14 +109,14 @@ function sleep(ms) {
     // console.log("target time:", targetTimeUnix);
     // console.log("nowTime:", nowTime);
 
-    if(nowTime + 501 < targetTimeUnix - offset)
+    if(nowTime + 631 < targetTimeUnix - offset)
     {
-        console.log(`Attack will be executed in ${targetTimeUnix - nowTime - 10 - 501} seconds.`);
+        console.log(`Attack will be executed in ${targetTimeUnix - nowTime - 10 - 631} seconds.`);
         setTimeout(() => {
             timeAttack(targetTimeUnix);
-        }, (targetTimeUnix - nowTime - 10 - 501) * 1000);
+        }, (targetTimeUnix - nowTime - 10 - 631) * 1000);
     }
-    else if(nowTime+501 >= targetTimeUnix - offset && nowTime+501 <= targetTimeUnix + offset)
+    else if(nowTime+631 >= targetTimeUnix - offset && nowTime+631 <= targetTimeUnix + offset)
     {
         console.log("right");
         timeAttack(targetTimeUnix);

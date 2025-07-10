@@ -201,6 +201,7 @@ function getReportData() {
     report.push(table);
 
     // Report spoiler
+    let report_string = getReport();
     report.push("[spoiler=Report][img]https://www.icegif.com/wp-content/uploads/2023/01/icegif-162.gif[/img][/spoiler]");
 
     // Get report
@@ -214,6 +215,36 @@ function getReportData() {
     console.log(reportText);
 
     return { reportTitle: reportTitle, reportText: reportText}
+}
+
+function getReport(reportId)
+{
+    //{"show_all":false,"hide_att_units":false,"hide_def_units":false,"hide_resources":false,"report_id":"636187","town_id":894,"nl_init":true}
+    const data = {
+        show_all: false,
+        hide_att_units: false,
+        hide_def_units: false,
+        hide_resources: false,
+        report_id: reportId,
+        town_id: 883,
+        nl_init: true,
+    };
+    
+    const h = Game.csrfToken;
+    const url = `game/report?town_id=883&action=publish_report&h=${h}`;
+
+    $.ajax({
+        url: url,
+        method: "POST",
+        data: {json: JSON.stringify(data)},
+        success: async function(res) {
+            console.log("✅ Report published successfully:", res);
+            
+        },
+        error: function(xhr) {
+            console.error("❌ Error generating report:", xhr.status, xhr.statusText, xhr.responseText);
+        }
+    });
 }
 
 function generateMessage() {
